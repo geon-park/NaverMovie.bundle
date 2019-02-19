@@ -4,12 +4,12 @@ import unicodedata
 import urllib
 from difflib import SequenceMatcher
 
-
 MOVIE_SEARCH = 'https://auto-movie.naver.com/ac?q_enc=UTF-8&st=1&r_lt=1&n_ext=1&t_koreng=1&r_format=json&' \
                'r_enc=UTF-8&r_unicode=0&r_escape=1&q=%s'
 MOVIE_DETAIL = 'https://movie.naver.com/movie/bi/mi/basic.nhn?code=%s'
 MOVIE_PHOTO_MAIN = 'https://movie.naver.com/movie/bi/mi/photoView.nhn?code=%s'
 MOVIE_PHOTOS = 'https://movie.naver.com/movie/bi/mi/photoListJson.nhn?movieCode=%s&size=%d&offset=%d'
+MOVIE_CAST = 'https://movie.naver.com/movie/bi/mi/detail.nhn?code=%s'
 
 
 def Start():
@@ -20,10 +20,7 @@ def Start():
 
 def calculate_match_score(media_name, title, media_year, year):
     score = int(85 * SequenceMatcher(None, media_name, title).ratio())
-    if media_year == year:
-        score += 15
-
-    return score
+    return score + 15 if media_year == year else score
 
 
 # Get Movie List from Naver
@@ -43,13 +40,19 @@ def get_movie_photos(metadata_id, category):
     try:
         index = int(html.xpath('string(//ul[@id="photoTypeGroup"]/li[@imagetype="%s"]/@photoindex)' % category)) - 1
         size = int(html.xpath('//ul[@id="photoTypeGroup"]/li[@imagetype="%s"]/a/em' % category)[0].text)
-    except ValueError:
+    except Exception:
         return None
 
     return JSON.ObjectFromURL(url=MOVIE_PHOTOS % (metadata_id, size, index))
 
 
-def parse_movie_detail(html, metadata, media):
+# Get Actors, Directors, Producers, Writers information
+def get_movie_cast(metadata_id):
+    return HTML.ElementFromURL(url=MOVIE_CAST % metadata_id)
+
+
+
+def parse_movie_detail(html, metadata):
     metadata.title = html.xpath('//div[@class="mv_info"]/h3/a')[0].text
     metadata.original_title = html.xpath('//div[@class="mv_info"]/h3/strong')[0].text.split(',')[0].strip()
     metadata.year = int(html.xpath('//div[@class="mv_info"]/h3/strong')[0].text.split(',')[-1].strip())
@@ -88,15 +91,15 @@ def parse_movie_detail(html, metadata, media):
         metadata.originally_available_at = None
 
     # 등급
-    grade = ''.join(x.strip() for x in html.xpath(
+    content_rating = ''.join(x.strip() for x in html.xpath(
         '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "grade")][1]/'
         'parent::span//descendant::text()'))
 
-    match = Regex(u'\[국내\]([^\[]+)').search(grade)
+    match = Regex(u'\[국내\]([^\[]+)').search(content_rating)
     if match:
-        metadata.content_rating  = match.group(1)
-    elif Regex(u'\[해외\]([^\[]+)').search(grade):
-        metadata.content_rating = Regex(u'\[해외\]([^\[]+)').search(grade).group(1)
+        metadata.content_rating = match.group(1)
+    elif Regex(u'\[해외\]([^\[]+)').search(content_rating):
+        metadata.content_rating = Regex(u'\[해외\]([^\[]+)').search(content_rating).group(1)
     else:
         None
 
@@ -105,7 +108,10 @@ def parse_movie_detail(html, metadata, media):
     summary += '\n\n' + '\n'.join(x.strip() for x in html.xpath('//div[@class="story_area"]/p[@class="con_tx"]/text()'))
     metadata.summary = summary.strip()
 
-    # metadata.duration = None
+    # 길이
+    # Log.Info('What Duration: %s', str(media.duration))
+    # match = Regex(u'(\d+)\s*분').search(html.xpath('//div[@class="mv_info"]/p[@class="info_spec"]/span[contains(., "분")'))
+    #metadata.duration = match.group(1) if match else None
 
 
 def parse_movie_photos(metadata, photo_list):
@@ -121,6 +127,12 @@ def parse_movie_photos(metadata, photo_list):
                 break
         except Exception:
             pass
+
+
+def parse_movie_cast(html, metadata):
+    # Actors
+    pass
+
 
 def search_naver_movie(results, media, lang):
     media_name = media.name
@@ -143,7 +155,7 @@ def search_naver_movie(results, media, lang):
 
 def update_naver_movie(metadata, media, lang):
     html = get_movie_detail(metadata.id)
-    parse_movie_detail(html, metadata, media)
+    parse_movie_detail(html, metadata)
 
     for category in ['STILLCUT', 'POSTER']:
         photo_list = get_movie_photos(metadata.id, category)
@@ -151,6 +163,8 @@ def update_naver_movie(metadata, media, lang):
             continue
 
         parse_movie_photos(metadata, photo_list)
+    html = get_movie_cast(metadata_id=metadata.id)
+    parse_movie_cast(html, metadata)
 
 
 class NaverMovieAgent(Agent.Movies):
