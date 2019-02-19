@@ -51,14 +51,13 @@ def get_movie_cast(metadata_id):
     return HTML.ElementFromURL(url=MOVIE_CAST % metadata_id)
 
 
-
 def parse_movie_detail(html, metadata):
     metadata.title = html.xpath('//div[@class="mv_info"]/h3/a')[0].text
     metadata.original_title = html.xpath('//div[@class="mv_info"]/h3/strong')[0].text.split(',')[0].strip()
     metadata.year = int(html.xpath('//div[@class="mv_info"]/h3/strong')[0].text.split(',')[-1].strip())
     metadata.title_sort = unicodedata.normalize('NFKD', metadata.title[0])[0] + ' ' + metadata.title
 
-    # 평점(관람객 -> 평론가 -> 네티즌)
+    # Rating (actualPointPersent -> spc -> pointNetizenPersent)
     if ''.join(html.xpath('//a[@id="actualPointPersentWide"]/div/descendant::em/text()')):
         metadata.rating = float(''.join(html.xpath('//a[@id="actualPointPersentWide"]/div/descendant::em/text()')))
     elif ''.join(html.xpath('(//a[@class="spc"])[0]/div/descendant::em/text()')):
@@ -66,18 +65,18 @@ def parse_movie_detail(html, metadata):
     elif ''.join(html.xpath('//a[@id="pointNetizenPersentWide"]/descendant::em/text()')):
         metadata.rating = float(''.join(html.xpath('//a[@id="pointNetizenPersentWide"]/descendant::em/text()')))
 
-    # 장르
+    # Genres
     genres = html.xpath('//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "genre")]/text()')
     for genre in genres:
         metadata.genres.add(genre.strip())
 
-    # 국가
+    # Countries
     countries = html.xpath(
         '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "nation")]/text()')
     for country in countries:
         metadata.countries.add(country.strip())
 
-    # 개봉일
+    # Release date
     originally_available_at = ''.join(x.strip() for x in html.xpath(
         '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "open")][1]/'
         'parent::span//descendant::text()'))
@@ -90,7 +89,7 @@ def parse_movie_detail(html, metadata):
     else:
         metadata.originally_available_at = None
 
-    # 등급
+    # Film rating
     content_rating = ''.join(x.strip() for x in html.xpath(
         '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "grade")][1]/'
         'parent::span//descendant::text()'))
@@ -103,15 +102,13 @@ def parse_movie_detail(html, metadata):
     else:
         None
 
-    # 줄거리
+    # Story
     summary = '\n'.join(x.strip() for x in html.xpath('//div[@class="story_area"]/h5[@class="h_tx_story"]/text()'))
     summary += '\n\n' + '\n'.join(x.strip() for x in html.xpath('//div[@class="story_area"]/p[@class="con_tx"]/text()'))
     metadata.summary = summary.strip()
 
-    # 길이
-    # Log.Info('What Duration: %s', str(media.duration))
-    # match = Regex(u'(\d+)\s*분').search(html.xpath('//div[@class="mv_info"]/p[@class="info_spec"]/span[contains(., "분")'))
-    #metadata.duration = match.group(1) if match else None
+    # Duration
+    # metadata.duration = 0
 
 
 def parse_movie_photos(metadata, photo_list):
@@ -131,7 +128,47 @@ def parse_movie_photos(metadata, photo_list):
 
 def parse_movie_cast(html, metadata):
     # Actors
-    pass
+    metadata.roles.clear()
+    xpath_base = '//div[@class="made_people"]//ul[@class="lst_people"]/li'
+    num_of_actors = html.xpath('count(%s)' % xpath_base)
+    for i in range(1, int(num_of_actors) + 1):
+        actor = metadata.roles.new()
+        name = html.xpath(xpath_base + '[' + str(i) + ']/div[@class="p_info"]/a[@class="k_name"]/text()')
+        actor.name = name[0].decode('utf8') if len(name) != 0 else None
+        photo = html.xpath(xpath_base + '[' + str(i) + ']/p[@class="p_thumb"]//img/@src')
+        actor.photo = photo[0] if len(photo) != 0 else None
+        role = html.xpath(xpath_base + '[' + str(i) + ']/div[@class="p_info"]//p[@class="pe_cmt"]/span/text()')
+        actor.role = role[0].decode('utf8') if len(role) != 0 else None
+        Log.Info('Actor Info: %s, %s, %s' % (actor.name, actor.photo, actor.role))
+    # Directors
+    metadata.directors.clear()
+    xpath_base = '//div[@class="director"]//div[@class="dir_obj"]'
+    num_of_directors = html.xpath('count(%s)' % xpath_base)
+    for i in range(1, int(num_of_directors) + 1):
+        director = metadata.directors.new()
+        name = html.xpath(xpath_base + '[' + str(i) + ']/p[@class="thumb_dir"]//img/@alt')
+        director.name = name[0].decode('utf8') if len(name) != 0 else None
+        photo = html.xpath(xpath_base + '[' + str(i) + ']/p[@class="thumb_dir"]//img/@src')
+        director.photo = photo[0] if len(photo) != 0 else None
+        Log.Info('Director Info: %s, %s' % (director.name, director.photo))
+    # Producers
+    metadata.producers.clear()
+    xpath_base = u'//table[@class="staff_lst"]/tbody//img[@alt="제작"]/parent::th/following-sibling::td/span'
+    num_of_producer = html.xpath(u'count(%s)' % xpath_base)
+    for i in range(1, int(num_of_producer) + 1):
+        producer = metadata.producers.new()
+        name = html.xpath('%s[%d]/a/text()' % (xpath_base, i))
+        producer.name = name[0].decode('utf8') if len(name) != 0 else None
+        Log.Info('Producer Info: %s, %s' % (producer.name, producer.photo))
+    # Writers
+    metadata.writers.clear()
+    xpath_base = u'//table[@class="staff_lst"]/tbody//img[@alt="각본"]/parent::th/following-sibling::td/span'
+    num_of_writer = html.xpath(u'count(%s)' % xpath_base)
+    for i in range(1, int(num_of_writer) + 1):
+        writer = metadata.writers.new()
+        name = html.xpath('%s[%d]/a/text()' % (xpath_base, i))
+        writer.name = name[0].decode('utf8') if len(name) != 0 else None
+        Log.Info('Writer Info: %s, %s' % (writer.name, writer.photo))
 
 
 def search_naver_movie(results, media, lang):
@@ -161,8 +198,8 @@ def update_naver_movie(metadata, media, lang):
         photo_list = get_movie_photos(metadata.id, category)
         if not photo_list:
             continue
-
         parse_movie_photos(metadata, photo_list)
+
     html = get_movie_cast(metadata_id=metadata.id)
     parse_movie_cast(html, metadata)
 
