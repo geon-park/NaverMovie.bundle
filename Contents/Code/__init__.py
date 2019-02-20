@@ -193,8 +193,8 @@ def search_naver_movie(results, media, lang):
                     break
 
         movie_id = html.xpath('substring-after(//ul[@class="search_list_1"]/li[' + str(i) + ']/dl/dt/a/@href, "code=")')
-        year = html.xpath('//ul[@class="search_list_1"]/li[' + str(i) + ']//a[contains(@href, "year")]/text()')[0]
-        year = year if year else None
+        year = html.xpath('//ul[@class="search_list_1"]/li[' + str(i) + ']//a[contains(@href, "year")]/text()')
+        year = year[0] if len(year) != 0 else None
         score = calculate_match_score(media_name, title, str(media.year), year)
         Log.Info('media_name: %s, title: %s, id: %s, media_year: %s, year: %s, score: %d ' %
                  (media_name, title, movie_id, media.year, year, score))
