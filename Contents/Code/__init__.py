@@ -40,7 +40,7 @@ def get_movie_photos(metadata_id, category):
         size = int(html.xpath('//ul[@id="photoTypeGroup"]/li[@imagetype="%s"]/a/em' % category)[0].text)
     except Exception:
         return None
-
+    Log.Debug('%s url: %s' % (category, MOVIE_PHOTOS % (metadata_id, size, index)))
     return JSON.ObjectFromURL(url=MOVIE_PHOTOS % (metadata_id, size, index))
 
 
