@@ -109,7 +109,7 @@ def parse_movie_detail(html, metadata):
     # metadata.duration = 0
 
 
-def parse_movie_photos(metadata, photo_list):
+def parse_movie_photos(metadata, photo_list, category):
     photo_info = {'STILLCUT': [5, metadata.art], 'POSTER': [5, metadata.posters]}
     items = photo_list['lists']
     index = 0
@@ -208,8 +208,9 @@ def update_naver_movie(metadata, media, lang):
     for category in ['STILLCUT', 'POSTER']:
         photo_list = get_movie_photos(metadata.id, category)
         if not photo_list:
+            Log.Debug('No Image for %s in %s' % (metadata.title, category))
             continue
-        parse_movie_photos(metadata, photo_list)
+        parse_movie_photos(metadata, photo_list, category)
 
     html = get_movie_cast(metadata_id=metadata.id)
     parse_movie_cast(html, metadata)
