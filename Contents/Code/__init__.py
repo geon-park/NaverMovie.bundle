@@ -149,24 +149,18 @@ def parse_movie_cast(html, metadata):
         photo = html.xpath(xpath_base + '[' + str(i) + ']/p[@class="thumb_dir"]//img/@src')
         director.photo = photo[0] if len(photo) != 0 else None
         Log.Info('Director Info: %s, %s' % (director.name, director.photo))
-    # Producers
-    metadata.producers.clear()
-    xpath_base = u'//table[@class="staff_lst"]/tbody//img[@alt="제작"]/parent::th/following-sibling::td/span'
-    num_of_producer = html.xpath(u'count(%s)' % xpath_base)
-    for i in range(1, int(num_of_producer) + 1):
-        producer = metadata.producers.new()
-        name = html.xpath('%s[%d]/a/text()' % (xpath_base, i))
-        producer.name = name[0].decode('utf8') if len(name) != 0 else None
-        Log.Info('Producer Info: %s, %s' % (producer.name, producer.photo))
-    # Writers
-    metadata.writers.clear()
-    xpath_base = u'//table[@class="staff_lst"]/tbody//img[@alt="각본"]/parent::th/following-sibling::td/span'
-    num_of_writer = html.xpath(u'count(%s)' % xpath_base)
-    for i in range(1, int(num_of_writer) + 1):
-        writer = metadata.writers.new()
-        name = html.xpath('%s[%d]/a/text()' % (xpath_base, i))
-        writer.name = name[0].decode('utf8') if len(name) != 0 else None
-        Log.Info('Writer Info: %s, %s' % (writer.name, writer.photo))
+    # Producers & Writers
+    info = [['제작', metadata.producers], ['각본', metadata.writers]]
+    for item in info:
+        item[1].clear()
+        base = u'//table[@class="staff_lst"]/tbody//img[@alt="%s"]/parent::th/following-sibling::td/span' % item[0]
+        num_of_people = html.xpath(u'count(%s)' % base)
+        for i in range(1, int(num_of_people) + 1):
+            people = item[1].new()
+            name = html.xpath('%s[%d]/a/text()' % (base, i)) if html.xpath('boolean(%s[%d]/a/text())' % (base, i)) \
+                else html.xpath('%s[%d]//text()' % (base, i))
+            people.name = name[0].decode('utf8').strip() if len(name) != 0 else None
+            Log.Info('%s Info: %s, %s' % (item[0], people.name, people.photo))
 
 
 def search_naver_movie(results, media, lang):
