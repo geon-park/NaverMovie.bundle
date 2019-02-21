@@ -4,7 +4,7 @@ import unicodedata
 import urllib
 from difflib import SequenceMatcher
 
-MOVIE_SEARCH = 'https://movie.naver.com/movie/search/result.nhn?section=movie&query=%s'
+MOVIE_SEARCH = 'https://movie.naver.com/movie/search/result.nhn?section=movie&query=%s&ie=utf8'
 MOVIE_DETAIL = 'https://movie.naver.com/movie/bi/mi/basic.nhn?code=%s'
 MOVIE_PHOTO_MAIN = 'https://movie.naver.com/movie/bi/mi/photoView.nhn?code=%s'
 MOVIE_PHOTOS = 'https://movie.naver.com/movie/bi/mi/photoListJson.nhn?movieCode=%s&size=%d&offset=%d'
@@ -14,7 +14,7 @@ MOVIE_CAST = 'https://movie.naver.com/movie/bi/mi/detail.nhn?code=%s'
 def Start():
     Log.Info('Naver Movie Agent started.')
     HTTP.CacheTime = CACHE_1DAY
-    HTTP.Headers['Accept'] = 'text/html, application/json'
+    HTTP.Headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
 
 
 def calculate_match_score(media_name, title, media_year, year):
@@ -24,7 +24,7 @@ def calculate_match_score(media_name, title, media_year, year):
 
 # Get Movie List from Naver
 def get_movie_list(media_name):
-    return HTML.ElementFromURL(MOVIE_SEARCH % urllib.quote(media_name.encode('euc_kr')))
+    return HTML.ElementFromURL(MOVIE_SEARCH % urllib.quote(media_name.encode('utf8')), encoding='ms949')
 
 
 # Get detail information for the movie
@@ -170,15 +170,14 @@ def parse_movie_cast(html, metadata):
 
 
 def search_naver_movie(results, media, lang):
-    media_name = media.name
+    media_name = media.name.upper()
     media_name = unicodedata.normalize('NFKC', unicode(media_name)).strip()
     Log.Debug('Filename: %s, Media name: %s, Year: %s' % (media.filename, media_name, media.year))
 
     html = get_movie_list(media_name=media_name)
     num_of_movies = html.xpath('count(//ul[@class="search_list_1"]/li)')
     for i in range(1, int(num_of_movies) + 1):
-        title = ''.join(x.decode('utf8') for x in html.xpath(
-            '//ul[@class="search_list_1"]/li[' + str(i) + ']/dl/dt//text()')).strip()
+        title = ''.join(html.xpath('//ul[@class="search_list_1"]/li[' + str(i) + ']/dl/dt//text()'))
 
         # Remove the original name part
         num_of_brackets = 0
@@ -195,8 +194,8 @@ def search_naver_movie(results, media, lang):
         movie_id = html.xpath('substring-after(//ul[@class="search_list_1"]/li[' + str(i) + ']/dl/dt/a/@href, "code=")')
         year = html.xpath('//ul[@class="search_list_1"]/li[' + str(i) + ']//a[contains(@href, "year")]/text()')
         year = year[0] if len(year) != 0 else None
-        score = calculate_match_score(media_name, title, str(media.year), year)
-        Log.Info('media_name: %s, title: %s, id: %s, media_year: %s, year: %s, score: %d ' %
+        score = calculate_match_score(media_name, title.upper(), str(media.year), year)
+        Log.Info('media_name: %s, title: %s, id: %s, media_year: %s, year: %s, score: %d' %
                  (media_name, title, movie_id, media.year, year, score))
         results.Append(MetadataSearchResult(id=movie_id, name=title, year=year, score=score, lang=lang))
 
