@@ -6,8 +6,8 @@ MOVIE_SEARCH = 'https://movie.naver.com/movie/search/result.nhn?section=movie&qu
 
 
 def calculate_match_score(media_name, title, media_year, year):
-    score = int(85 * SequenceMatcher(None, media_name, title).ratio())
-    return score + 15 if media_year == year else score
+    score = int(60 * SequenceMatcher(None, media_name, title).ratio())
+    return score + 40 if media_year == year else score
 
 
 def get_movie_list(media_name):

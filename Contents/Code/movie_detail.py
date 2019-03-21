@@ -89,7 +89,10 @@ def parse_movie_detail(html, metadata):
 
 
 def parse_movie_photos(metadata, photo_list, category):
-    photo_info = {'STILLCUT': [5, metadata.art], 'POSTER': [5, metadata.posters]}
+    photo_info = {
+        'STILLCUT': [Prefs['max_num_arts'], metadata.art],
+        'POSTER': [Prefs['max_num_posters'], metadata.posters]
+    }
     items = photo_list['lists']
     index = 0
     for item in items:
@@ -97,7 +100,7 @@ def parse_movie_photos(metadata, photo_list, category):
             index += 1
             url = item['fullImageUrl']
             photo_info[category][1][url] = Proxy.Preview(HTTP.Request(url), sort_order=index)
-            if photo_info[category][0] == index:
+            if photo_info[category][0] <= index:
                 break
         except Exception:
             pass
