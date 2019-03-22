@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import unicodedata
 from .movie_list import search_naver_movie
 from .movie_detail import update_naver_movie
+from .metadata_parser import get_metadata_path, parse_metadata
 
 
 def Start():
@@ -18,7 +18,11 @@ class NaverMovieAgent(Agent.Movies):
     accepts_from = ['com.plexapp.agents.localmedia']
 
     def search(self, results, media, lang):
-        return search_naver_movie(results, media, lang)
+        metadata_path = get_metadata_path(media=media)
+        if metadata_path is not None:
+            return parse_metadata(results, lang, metadata_path)
+        else:
+            return search_naver_movie(results, media, lang)
 
     def update(self, metadata, media, lang):
         update_naver_movie(metadata, media, lang)
