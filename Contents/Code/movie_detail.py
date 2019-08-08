@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import unicodedata
 
 MOVIE_DETAIL = 'https://movie.naver.com/movie/bi/mi/basic.nhn?code=%s'
@@ -41,6 +43,9 @@ def parse_movie_detail(html, metadata):
         metadata.rating = float(''.join(html.xpath('(//a[@class="spc"])[0]/div/descendant::em/text()')))
     elif ''.join(html.xpath('//a[@id="pointNetizenPersentWide"]/descendant::em/text()')):
         metadata.rating = float(''.join(html.xpath('//a[@id="pointNetizenPersentWide"]/descendant::em/text()')))
+    elif ''.join(html.xpath('//div[@class="netizen_score"]//div[@class="star_score"]/descendant::em/text()')):
+        metadata.rating = float(''.join(html.xpath('//div[@class="netizen_score"]//div[@class="star_score"]'
+                                                   '/descendant::em/text()')))
 
     # Genres
     genres = html.xpath('//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "genre")]/text()')
@@ -55,20 +60,21 @@ def parse_movie_detail(html, metadata):
 
     # Release date
     originally_available_at = ''.join(x.strip() for x in html.xpath(
-        '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "open")][1]/'
+        '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "bmovie.nhn?open=")][1]/'
         'parent::span//descendant::text()'))
     match = Regex(u'(\d{4}\.\d{2}\.\d{2})\s*개봉').search(originally_available_at)
     if match:
         metadata.originally_available_at = Datetime.ParseDate(match.group(1)).date()
-    elif Regex(u'(\d{4}\.\d{2}\.\d{2})\s*재개봉').search(originally_available_at):
-        match = Regex(u'(\d{4}\.\d{2}\.\d{2})\s*재개봉').search(originally_available_at)
-        metadata.originally_available_at = Datetime.ParseDate(match.group(1)).date()
     else:
-        metadata.originally_available_at = None
+        match = Regex(u'(\d{4}\.\d{2}\.\d{2})\s*재개봉').search(originally_available_at)
+        if match:
+            metadata.originally_available_at = Datetime.ParseDate(match.group(1)).date()
+        else:
+            metadata.originally_available_at = None
 
     # Film rating
     content_rating = ''.join(x.strip() for x in html.xpath(
-        '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "grade")][1]/'
+        '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "bmovie.nhn?grade=")][1]/'
         'parent::span//descendant::text()'))
 
     match = Regex(u'\[국내\]([^\[]+)').search(content_rating)
@@ -77,7 +83,7 @@ def parse_movie_detail(html, metadata):
     elif Regex(u'\[해외\]([^\[]+)').search(content_rating):
         metadata.content_rating = Regex(u'\[해외\]([^\[]+)').search(content_rating).group(1)
     else:
-        None
+        metadata.content_rating = None
 
     # Story
     summary = '\n'.join(x.strip() for x in html.xpath('//div[@class="story_area"]/h5[@class="h_tx_story"]/text()'))
