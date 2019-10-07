@@ -30,8 +30,8 @@ def get_movie_cast(metadata_id):
     return HTML.ElementFromURL(url=MOVIE_CAST % metadata_id)
 
 
-def parse_movie_detail(html, metadata):
-    metadata.title = html.xpath('//div[@class="mv_info"]/h3/a')[0].text
+def parse_movie_detail(html, metadata, media):
+    metadata.title = media.title  # html.xpath('//div[@class="mv_info"]/h3/a')[0].text
     metadata.original_title = html.xpath('//div[@class="mv_info"]/h3/strong')[0].text.split(',')[0].strip()
     metadata.year = int(html.xpath('//div[@class="mv_info"]/h3/strong')[0].text.split(',')[-1].strip())
     metadata.title_sort = unicodedata.normalize('NFKD', metadata.title[0])[0] + ' ' + metadata.title
@@ -153,7 +153,7 @@ def parse_movie_cast(html, metadata):
 
 def update_naver_movie(metadata, media, lang):
     html = get_movie_detail(metadata.id)
-    parse_movie_detail(html, metadata)
+    parse_movie_detail(html, metadata, media)
 
     for category in ['STILLCUT', 'POSTER']:
         photo_list = get_movie_photos(metadata.id, category)
