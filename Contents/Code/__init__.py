@@ -2,7 +2,8 @@
 
 from .movie_list import search_naver_movie
 from .movie_detail import update_naver_movie
-from .metadata_parser import get_metadata_path, parse_metadata
+from .metadata_parser import is_search_metadata_available, parse_search_metadata, \
+    is_detail_metadata_available, parse_detail_metadata
 
 
 def Start():
@@ -18,11 +19,15 @@ class NaverMovieAgent(Agent.Movies):
     accepts_from = ['com.plexapp.agents.localmedia']
 
     def search(self, results, media, lang):
-        metadata_path = get_metadata_path(media=media)
-        if metadata_path is not None:
-            return parse_metadata(results, lang, metadata_path)
+        metadata_exists = is_search_metadata_available(media=media)
+        if metadata_exists:
+            return parse_search_metadata(media=media, lang=lang, results=results)
         else:
             return search_naver_movie(results, media, lang)
 
     def update(self, metadata, media, lang):
-        update_naver_movie(metadata, media, lang)
+        metadata_exists = is_detail_metadata_available(media=media)
+        if metadata_exists:
+            parse_detail_metadata(media=media, metadata=metadata)
+        else:
+            update_naver_movie(metadata, media, lang)
