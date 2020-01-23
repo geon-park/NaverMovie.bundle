@@ -38,15 +38,15 @@ def get_detail_metadata_path(media):
 
 def is_detail_metadata_available(media):
     metadata_path = get_detail_metadata_path(media=media)
+    if metadata_path is None:
+        return False
 
-    if exists(metadata_path):
-        with os.fdopen(os.open(metadata_path, os.O_RDONLY), 'rt') as f:
-            json_data = json.load(f)
-            if 'detail' in json_data:
-                return True
-            else:
-                return False
-    return False
+    with os.fdopen(os.open(metadata_path, os.O_RDONLY), 'rt') as f:
+        json_data = json.load(f)
+        if 'detail' in json_data:
+            return True
+        else:
+            return False
 
 
 def parse_detail_metadata(media, metadata):
