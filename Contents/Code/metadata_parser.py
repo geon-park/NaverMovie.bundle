@@ -5,6 +5,7 @@ import os
 import unicodedata
 import urllib
 from os.path import dirname, exists, join
+from .content_rating import get_content_rating
 
 
 def get_search_metadata_path(media):
@@ -67,7 +68,7 @@ def parse_detail_metadata(media, metadata):
         if 'originally_available_at' in detail:
             metadata.originally_available_at = Datetime.ParseDate(detail['originally_available_at']).date()
         if 'content_rating' in detail:
-            metadata.content_rating = detail['content_rating']
+            metadata.content_rating = get_content_rating(detail['content_rating'], Prefs['content_rating'])
         if 'summary' in detail:
             metadata.summary = detail['summary']
 

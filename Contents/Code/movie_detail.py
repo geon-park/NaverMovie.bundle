@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unicodedata
+from .content_rating import get_content_rating
 
 MOVIE_DETAIL = 'https://movie.naver.com/movie/bi/mi/basic.nhn?code=%s'
 MOVIE_PHOTO_MAIN = 'https://movie.naver.com/movie/bi/mi/photoView.nhn?code=%s'
@@ -73,15 +74,16 @@ def parse_movie_detail(html, metadata, media):
             metadata.originally_available_at = None
 
     # Film rating
-    content_rating = ''.join(x.strip() for x in html.xpath(
+    content_rating = '\n'.join(x.strip() for x in html.xpath(
         '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "bmovie.nhn?grade=")][1]/'
         'parent::span//descendant::text()'))
 
-    match = Regex(u'\[국내\]([^\[]+)').search(content_rating)
+    match = Regex(u'\[국내\]\n([^\[\n]+)').search(content_rating)
     if match:
-        metadata.content_rating = match.group(1)
-    elif Regex(u'\[해외\]([^\[]+)').search(content_rating):
-        metadata.content_rating = Regex(u'\[해외\]([^\[]+)').search(content_rating).group(1)
+        metadata.content_rating = get_content_rating(match.group(1), Prefs['content_rating'])
+    elif Regex(u'\[해외\]\n([^\[\n]+)').search(content_rating):
+        metadata.content_rating = get_content_rating(Regex(u'\[해외\]\n([^\[\n]+)').search(content_rating).group(1),
+                                                     Prefs['content_rating'])
     else:
         metadata.content_rating = None
 
