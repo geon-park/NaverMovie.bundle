@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import json
 import os
 import urlparse
-
 
 METADATA_URL = 'http://127.0.0.1:32400/library/metadata/%s'
 
@@ -33,9 +33,16 @@ def get_metadata_path(media, library_type):
         return None
 
 
-def is_metadata_available(media, library_type):
+def is_search_metadata_available(media, library_type):
     return True if get_metadata_path(media, library_type) is not None else False
 
+
+def is_detail_metadata_available(media, library_type):
+    metadata_path = get_metadata_path(media, library_type)
+    if not metadata_path:
+        return False
+    json_data = json.loads(Core.storage.load(metadata_path))
+    return True if 'detail' in json_data else False
 
 
 def check_url_path(path):
