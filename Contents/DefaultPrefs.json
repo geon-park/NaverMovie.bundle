@@ -13,8 +13,8 @@
     "default": "3"
   },
   {
-    "id": "max_num_arts",
-    "label": "The Number of Arts",
+    "id": "max_num_art",
+    "label": "The Number of Art",
     "type": "enum",
     "values": [
       "1",
@@ -24,6 +24,32 @@
       "15"
     ],
     "default": "3"
+  },
+  {
+    "id": "max_num_banners",
+    "label": "The Number of Banners",
+    "type": "enum",
+    "values": [
+      "1",
+      "3",
+      "5",
+      "10",
+      "15"
+    ],
+    "default": "3"
+  },
+  {
+    "id": "max_num_themes",
+    "label": "The Number of Themes",
+    "type": "enum",
+    "values": [
+      "1",
+      "3",
+      "5",
+      "10",
+      "15"
+    ],
+    "default": "1"
   },
   {
     "id": "content_rating",

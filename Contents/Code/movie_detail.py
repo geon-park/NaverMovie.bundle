@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unicodedata
+from .common_function import LibraryType
 from .content_rating import get_content_rating
 
 MOVIE_DETAIL = 'https://movie.naver.com/movie/bi/mi/basic.nhn?code=%s'
@@ -98,7 +99,7 @@ def parse_movie_detail(html, metadata, media):
 
 def parse_movie_photos(metadata, photo_list, category):
     photo_info = {
-        'STILLCUT': [Prefs['max_num_arts'], metadata.art],
+        'STILLCUT': [Prefs['max_num_art'], metadata.art],
         'POSTER': [Prefs['max_num_posters'], metadata.posters]
     }
     items = photo_list['lists']
