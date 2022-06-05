@@ -4,10 +4,10 @@ import unicodedata
 from .common_function import LibraryType
 from .content_rating import get_content_rating
 
-MOVIE_DETAIL = 'https://movie.naver.com/movie/bi/mi/basic.nhn?code=%s'
-MOVIE_PHOTO_MAIN = 'https://movie.naver.com/movie/bi/mi/photoView.nhn?code=%s'
-MOVIE_PHOTOS = 'https://movie.naver.com/movie/bi/mi/photoListJson.nhn?movieCode=%s&size=%d&offset=%d'
-MOVIE_CAST = 'https://movie.naver.com/movie/bi/mi/detail.nhn?code=%s'
+MOVIE_DETAIL = 'https://movie.naver.com/movie/bi/mi/basic.naver?code=%s'
+MOVIE_PHOTO_MAIN = 'https://movie.naver.com/movie/bi/mi/photoView.naver?code=%s'
+MOVIE_PHOTOS = 'https://movie.naver.com/movie/bi/mi/photoListJson.naver?movieCode=%s&size=%d&offset=%d'
+MOVIE_CAST = 'https://movie.naver.com/movie/bi/mi/detail.naver?code=%s'
 
 
 # Get detail information for the movie
@@ -62,7 +62,7 @@ def parse_movie_detail(html, metadata, media):
 
     # Release date
     originally_available_at = ''.join(x.strip() for x in html.xpath(
-        '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "bmovie.nhn?open=")][1]/'
+        '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "bmovie.naver?open=")][1]/'
         'parent::span//descendant::text()'))
     match = Regex(u'(\d{4}\.\d{2}\.\d{2})\s*개봉').search(originally_available_at)
     if match:
@@ -76,7 +76,7 @@ def parse_movie_detail(html, metadata, media):
 
     # Film rating
     content_rating = '\n'.join(x.strip() for x in html.xpath(
-        '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "bmovie.nhn?grade=")][1]/'
+        '//div[@class="mv_info"]/p[@class="info_spec"]//descendant::a[contains(@href, "bmovie.naver?grade=")][1]/'
         'parent::span//descendant::text()'))
 
     match = Regex(u'\[국내\]\n([^\[\n]+)').search(content_rating)

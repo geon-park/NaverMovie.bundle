@@ -4,7 +4,7 @@ from difflib import SequenceMatcher
 import unicodedata
 import urllib
 
-MOVIE_SEARCH = 'https://movie.naver.com/movie/search/result.nhn?section=movie&query=%s&ie=utf8'
+MOVIE_SEARCH = 'https://movie.naver.com/movie/search/result.naver?section=movie&query=%s&section=all'
 
 
 def calculate_match_score(media_name, title, media_year, year):
@@ -13,7 +13,7 @@ def calculate_match_score(media_name, title, media_year, year):
 
 
 def get_movie_list(media_name):
-    return HTML.ElementFromURL(MOVIE_SEARCH % urllib.quote(media_name.encode('utf8')), encoding='ms949')
+    return HTML.ElementFromURL(MOVIE_SEARCH % urllib.quote_plus(media_name.encode('utf8')), encoding='utf8')
 
 
 def search_naver_movie(results, media, lang):
